@@ -1,0 +1,12 @@
+#!/bin/bash
+
+
+export CROSS_COMPILE=../prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
+export ARCH=arm
+
+if [ ! -z $1 ];then
+    make clean
+fi
+
+make imx_v7_s606_android_defconfig
+make

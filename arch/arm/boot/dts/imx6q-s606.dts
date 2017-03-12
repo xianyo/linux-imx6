@@ -17,13 +17,7 @@
 
 / {
 	model = "ARMT i.MX6 Quad S606 Board";
-	compatible = "fsl,imx6q-sabresd", "fsl,imx6q";
-};
-
-&battery {
-	offset-charger = <1900>;
-	offset-discharger = <1694>;
-	offset-usb-charger = <1685>;
+	compatible = "fsl,imx6q-s606", "fsl,imx6q-sabresd", "fsl,imx6q";
 };
 
 &ldb {
