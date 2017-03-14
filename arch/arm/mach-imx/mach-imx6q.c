@@ -408,6 +408,40 @@ static const struct of_dev_auxdata imx6q_auxdata_lookup[] __initconst = {
 	{ /* sentinel */ }
 };
 
+#define POWER_LOCK	IMX_GPIO_NR(1, 2)
+#define WLAN_HOST_WAKEUP	IMX_GPIO_NR(6, 18)
+#define WLAN_PWREN	IMX_GPIO_NR(6, 17)
+#define LCD_PWREN	IMX_GPIO_NR(1, 9)
+#define AUD_PWREN	IMX_GPIO_NR(7, 11)
+#define USB_HUB_RST	IMX_GPIO_NR(6, 14)
+#define VGA_PDN		IMX_GPIO_NR(6, 7)
+#define WIFI_REG_ON	IMX_GPIO_NR(7, 8)
+#define DISP0_BLEN	IMX_GPIO_NR(6, 31)
+#define LCD_GPIO	IMX_GPIO_NR(4, 20)
+#define EINT_RST	IMX_GPIO_NR(1, 25)
+
+
+
+static void __init imx6q_s606_init(void)
+{
+	pr_warn("imx6q_s606_init to initialize soc device\n");
+
+
+	if (gpio_is_valid(LCD_PWREN) &&!gpio_request_one(LCD_PWREN, GPIOF_DIR_OUT, "LCD_PWREN"))
+		gpio_set_value_cansleep(LCD_PWREN, 1);
+
+	if (gpio_is_valid(VGA_PDN) &&!gpio_request_one(VGA_PDN, GPIOF_DIR_OUT, "VGA_PDN"))
+		gpio_set_value_cansleep(VGA_PDN, 1);
+
+	if (gpio_is_valid(DISP0_BLEN) &&!gpio_request_one(DISP0_BLEN, GPIOF_DIR_OUT, "DISP0_BLEN"))
+		gpio_set_value_cansleep(DISP0_BLEN, 1);
+
+	if (gpio_is_valid(LCD_GPIO) &&!gpio_request_one(LCD_GPIO, GPIOF_DIR_OUT, "LCD_GPIO"))
+		gpio_set_value_cansleep(LCD_GPIO, 1);
+
+
+}
+
 static void __init imx6q_init_machine(void)
 {
 	struct device *parent;
@@ -427,11 +461,15 @@ static void __init imx6q_init_machine(void)
 	of_platform_populate(NULL, of_default_bus_match_table,
 					imx6q_auxdata_lookup, parent);
 
+	if (of_machine_is_compatible("fsl,imx6q-s606"))
+		imx6q_s606_init();
+		
 	imx6q_enet_init();
 	imx_anatop_init();
 	imx6q_csi_mux_init();
 	cpu_is_imx6q() ?  imx6q_pm_init() : imx6dl_pm_init();
 	imx6q_mini_pcie_init();
+	
 }
 
 #define OCOTP_CFG3			0x440

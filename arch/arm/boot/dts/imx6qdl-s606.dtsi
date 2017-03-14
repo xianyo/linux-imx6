@@ -140,9 +140,9 @@
 	mxcfb3: fb@2 {
 		compatible = "fsl,mxc_sdc_fb";
 		disp_dev = "lcd";
-		interface_pix_fmt = "RGB565";
-		mode_str ="CLAA-WVGA";
-		default_bpp = <16>;
+		interface_pix_fmt = "RGB24";
+		mode_str ="VGA-1080P";
+		default_bpp = <24>;
 		int_clk = <0>;
 		late_init = <0>;
 		status = "disabled";
@@ -150,10 +150,21 @@
 
 	mxcfb4: fb@3 {
 		compatible = "fsl,mxc_sdc_fb";
-		disp_dev = "lcd";
+		disp_dev = "ldb";
 		interface_pix_fmt = "RGB24";
-		mode_str ="VGA-1080P";
 		default_bpp = <24>;
+		int_clk = <0>;
+		late_init = <0>;
+		status = "disabled";
+	};
+
+/*
+	mxcfb4: fb@3 {
+		compatible = "fsl,mxc_sdc_fb";
+		disp_dev = "lcd";
+		interface_pix_fmt = "RGB565";
+		mode_str ="CLAA-WVGA";
+		default_bpp = <16>;
 		int_clk = <0>;
 		late_init = <0>;
 		status = "disabled";
@@ -168,8 +179,8 @@
 		pinctrl-0 = <&pinctrl_ipu1>;
 		status = "okay";
 	};
-
-	lcd@1 {
+*/
+	lcd@0 {
 		compatible = "fsl,lcd";
 		ipu_id = <0>;
 		disp_id = <1>;
@@ -362,7 +373,7 @@
 				MX6QDL_PAD_SD3_DAT7__GPIO6_IO17		0x80000000 /*WLAN_PWREN*/
 				MX6QDL_PAD_GPIO_9__GPIO1_IO09		0x80000000 /*LCD_PWREN*/
 				MX6QDL_PAD_GPIO_16__GPIO7_IO11		0x80000000 /*AUD_PWREN*/
-				MX6QDL_PAD_GPIO_17__GPIO7_IO12		0x80000000 /*AUD_PWREN*/
+				MX6QDL_PAD_GPIO_17__GPIO7_IO12		0x80000000 /* */
 				MX6QDL_PAD_GPIO_18__GPIO7_IO13		0x80000000 /*HP_IN_DET*/
 				MX6QDL_PAD_GPIO_19__GPIO4_IO05		0x80000000 /*EXTERNAL GPIO*/
 				MX6QDL_PAD_NANDF_CS0__GPIO6_IO11 0x80000000  /*EXTERNAL GPIO*/
@@ -445,13 +456,6 @@
 				MX6QDL_PAD_RGMII_RD2__RGMII_RD2		0x1b0b0
 				MX6QDL_PAD_RGMII_RD3__RGMII_RD3		0x1b0b0
 				MX6QDL_PAD_RGMII_RX_CTL__RGMII_RX_CTL	0x1b0b0
-				MX6QDL_PAD_GPIO_16__ENET_REF_CLK	0x4001b0a8
-			>;
-		};
-
-		pinctrl_enet_irq: enetirqgrp {
-			fsl,pins = <
-				MX6QDL_PAD_GPIO_6__ENET_IRQ		0x000b1
 			>;
 		};
 
