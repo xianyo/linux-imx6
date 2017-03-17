@@ -39,7 +39,13 @@ struct mxc_dispdrv_driver {
 	/* display driver disable function, called at early part of fb_blank */
 	void (*disable) (struct mxc_dispdrv_handle *, struct fb_info *);
 	/* display driver setup function, called at early part of fb_set_par */
-	int (*setup) (struct mxc_dispdrv_handle *, struct fb_info *fbi);
+  int (*setup) (struct mxc_dispdrv_handle *, struct fb_info *fbi);
+  
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS
+  	/* display driver late init done. */
+  	void (*late_init_done) (struct mxc_dispdrv_handle *);
+#endif
+
 };
 
 struct mxc_dispdrv_handle *mxc_dispdrv_register(struct mxc_dispdrv_driver *drv);

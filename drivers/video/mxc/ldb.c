@@ -110,6 +110,12 @@ struct ldb_data {
 	struct clk *div_3_5_clk[2];
 	struct clk *div_7_clk[2];
 	struct clk *div_sel_clk[2];
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI0) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI1)  || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI0)  || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI1)
+   bool fb_reg;
+#endif
 };
 
 static const struct crtc_mux imx6q_lvds0_crtc_mux[] = {
@@ -437,6 +443,14 @@ static int ldb_setup(struct mxc_dispdrv_handle *mddh,
 		return ret;
 	}
 
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI0) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI0) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI1)
+   if (ldb->fb_reg == false) {
+       return 0;
+   }
+#endif
 
 	if (ldb->clk_fixup) {
 		/*
@@ -528,6 +542,15 @@ static int ldb_enable(struct mxc_dispdrv_handle *mddh,
 
 	bus_mux = ldb->buses[chno];
 
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI0) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI0) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI1)
+   if (ldb->fb_reg == false) {
+       return 0;
+   }
+#endif
+
 	if (ldb->spl_mode || ldb->dual_mode) {
 		other_chno = chno ? 0 : 1;
 		clk_prepare_enable(ldb->ldb_di_clk[other_chno]);
@@ -569,6 +592,15 @@ static void ldb_disable(struct mxc_dispdrv_handle *mddh,
 	if (ret < 0)
 		return;
 
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI0) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI0) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI1)
+   if (ldb->fb_reg == false) {
+       return;
+   }
+#endif
+
 	if (ldb->spl_mode || ldb->dual_mode) {
 		ldb->ctrl &= ~(LDB_CH1_MODE_MASK | LDB_CH0_MODE_MASK);
 		other_chno = chno ? 0 : 1;
@@ -582,12 +614,32 @@ static void ldb_disable(struct mxc_dispdrv_handle *mddh,
 	return;
 }
 
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI0) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI0) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI1)
+void ldb_disp_late_init_done(struct mxc_dispdrv_handle *disp)
+{
+   struct ldb_data *ldb = mxc_dispdrv_getdata(disp);
+
+   ldb->fb_reg = true;
+}
+#endif
+
 static struct mxc_dispdrv_driver ldb_drv = {
 	.name		= DRIVER_NAME,
 	.init		= ldb_init,
 	.setup		= ldb_setup,
 	.enable		= ldb_enable,
-	.disable	= ldb_disable
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI0) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI0) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI1)
+   .disable        = ldb_disable,
+   .late_init_done = ldb_disp_late_init_done
+#else
+   .disable        = ldb_disable
+#endif
 };
 
 enum {

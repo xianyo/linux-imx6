@@ -169,25 +169,25 @@
 		late_init = <0>;
 		status = "disabled";
 	};
-
-	lcd@0 {
+*/
+	mxclcd0: lcd@0 {
 		compatible = "fsl,lcd";
 		ipu_id = <0>;
 		disp_id = <0>;
 		default_ifmt = "RGB565";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_ipu1>;
-		status = "okay";
+		status = "disabled";
 	};
-*/
-	lcd@0 {
+
+	mxclcd1: lcd@1 {
 		compatible = "fsl,lcd";
 		ipu_id = <0>;
 		disp_id = <1>;
 		default_ifmt = "RGB24";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_ipu1_di1>;
-		status = "okay";
+		status = "disabled";
 	};
 
 	pwm-backlight {

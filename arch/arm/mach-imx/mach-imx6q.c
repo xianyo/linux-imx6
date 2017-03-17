@@ -615,6 +615,26 @@ static void imx6q_reserve(void)
 	struct meminfo *mi;
 	struct membank *bank;
 
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS
+  phys_addr_t base, size;
+
+/*
+	 * Frame buffer base address.
+	 * It is same as CONFIG_FB_BASE in Uboot.
+*/
+ base = 0x18800000;
+
+/*
+	 * Reserved display memory size.
+	 * It should be bigger than 3 x framer buffer size.
+	 * For 1080P 32 bpp, 1920*1080*4*3 = 0x017BB000.
+*/
+	size = 0x01800000;
+
+	memblock_reserve(base, size);
+	memblock_remove(base, size);
+#endif
+
 #ifdef CONFIG_PSTORE_RAM
 	mi = &meminfo;
 	if (!mi) {

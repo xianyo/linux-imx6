@@ -303,6 +303,12 @@ static void init_ldb_clks(struct device_node *np)
 	ldb_di1_sel[1] = ldb_di1_sel[0] | 4;
 	ldb_di1_sel[2] = ldb_di1_sel[3] | 4;
 
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI1)
+	return;
+#else
 	mmdc_ch1_handshake(false);
 	mmdc_ch1_disable();
 
@@ -315,10 +321,14 @@ static void init_ldb_clks(struct device_node *np)
 
 	mmdc_ch1_reenable();
 	mmdc_ch1_handshake(true);
+#endif
 }
 
 static void disable_anatop_clocks(void)
 {
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS
+	return;
+#else
 	u32 reg;
 
 	/* Make sure PFDs are disabled at boot. */
@@ -340,6 +350,7 @@ static void disable_anatop_clocks(void)
 	reg = readl_relaxed(anatop_base + 0xa0);
 	reg &= ~(1 << 13);
 	writel_relaxed(reg, anatop_base + 0xa0);
+#endif
 }
 
 static void __init imx6q_clocks_init(struct device_node *ccm_node)
@@ -795,10 +806,54 @@ static void __init imx6q_clocks_init(struct device_node *ccm_node)
 	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI1_PRE_SEL], clk[IMX6QDL_CLK_PLL5_VIDEO_DIV]);
 	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI0_PRE_SEL], clk[IMX6QDL_CLK_PLL5_VIDEO_DIV]);
 	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI1_PRE_SEL], clk[IMX6QDL_CLK_PLL5_VIDEO_DIV]);
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU2_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU2_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1)
 	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI0_SEL], clk[IMX6QDL_CLK_IPU1_DI0_PRE]);
 	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI1_SEL], clk[IMX6QDL_CLK_IPU1_DI1_PRE]);
 	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI0_SEL], clk[IMX6QDL_CLK_IPU2_DI0_PRE]);
 	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI1_SEL], clk[IMX6QDL_CLK_IPU2_DI1_PRE]);
+#endif
+
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI0
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI0_SEL], clk[IMX6QDL_CLK_LDB_DI0]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI1_SEL], clk[IMX6QDL_CLK_IPU1_DI1_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI0_SEL], clk[IMX6QDL_CLK_IPU2_DI0_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI1_SEL], clk[IMX6QDL_CLK_IPU2_DI1_PRE]);
+#endif
+
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI1
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI0_SEL], clk[IMX6QDL_CLK_IPU1_DI0_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI1_SEL], clk[IMX6QDL_CLK_LDB_DI1]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI0_SEL], clk[IMX6QDL_CLK_IPU2_DI0_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI1_SEL], clk[IMX6QDL_CLK_IPU2_DI1_PRE]);
+#endif
+
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI0
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI0_SEL], clk[IMX6QDL_CLK_IPU1_DI0_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI1_SEL], clk[IMX6QDL_CLK_IPU1_DI1_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI0_SEL], clk[IMX6QDL_CLK_LDB_DI0]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI1_SEL], clk[IMX6QDL_CLK_IPU2_DI1_PRE]);
+#endif
+
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI1
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI0_SEL], clk[IMX6QDL_CLK_IPU1_DI0_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI1_SEL], clk[IMX6QDL_CLK_IPU1_DI1_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI0_SEL], clk[IMX6QDL_CLK_IPU2_DI0_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI1_SEL], clk[IMX6QDL_CLK_LDB_DI1]);
+#endif
+#else
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI0_SEL], clk[IMX6QDL_CLK_IPU1_DI0_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_DI1_SEL], clk[IMX6QDL_CLK_IPU1_DI1_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI0_SEL], clk[IMX6QDL_CLK_IPU2_DI0_PRE]);
+	imx_clk_set_parent(clk[IMX6QDL_CLK_IPU2_DI1_SEL], clk[IMX6QDL_CLK_IPU2_DI1_PRE]);
+#endif
 	if (cpu_is_imx6dl()) {
 		imx_clk_set_rate(clk[IMX6QDL_CLK_PLL3_PFD1_540M], 540000000);
 		imx_clk_set_parent(clk[IMX6QDL_CLK_IPU1_SEL], clk[IMX6QDL_CLK_PLL3_PFD1_540M]);

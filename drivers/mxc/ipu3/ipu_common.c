@@ -130,110 +130,113 @@ static inline bool idma_is_set(struct ipu_soc *ipu, uint32_t reg, uint32_t dma)
 
 static int ipu_clk_setup_enable(struct ipu_soc *ipu)
 {
-	char pixel_clk_0[] = "ipu1_pclk_0";
-	char pixel_clk_1[] = "ipu1_pclk_1";
-	char pixel_clk_0_sel[] = "ipu1_pclk0_sel";
-	char pixel_clk_1_sel[] = "ipu1_pclk1_sel";
-	char pixel_clk_0_div[] = "ipu1_pclk0_div";
-	char pixel_clk_1_div[] = "ipu1_pclk1_div";
-	char *ipu_pixel_clk_sel[] = { "ipu1", "ipu1_di0", "ipu1_di1", };
-	char *pclk_sel;
+	char pixel_clk[11];
+	char pixel_clk_sel[15];
+	char pixel_clk_div[15];
+	char pixel_clk_parent0[5];
+	char pixel_clk_parent1[9];
+	char *pixel_clk_parents[2];
+	char di_clk[4];
+	char di_clk_sel[8];
 	struct clk *clk;
+	unsigned int di;
+	unsigned int ipu_id;	/* for clk naming */
 	int ret;
-	int i;
 
-	pixel_clk_0[3] += ipu->id;
-	pixel_clk_1[3] += ipu->id;
-	pixel_clk_0_sel[3] += ipu->id;
-	pixel_clk_1_sel[3] += ipu->id;
-	pixel_clk_0_div[3] += ipu->id;
-	pixel_clk_1_div[3] += ipu->id;
-	for (i = 0; i < ARRAY_SIZE(ipu_pixel_clk_sel); i++) {
-		pclk_sel = ipu_pixel_clk_sel[i];
-		pclk_sel[3] += ipu->id;
-	}
 	dev_dbg(ipu->dev, "ipu_clk = %lu\n", clk_get_rate(ipu->ipu_clk));
 
-	clk = clk_register_mux_pix_clk(ipu->dev, pixel_clk_0_sel,
-			(const char **)ipu_pixel_clk_sel,
-			ARRAY_SIZE(ipu_pixel_clk_sel),
-			0, ipu->id, 0, 0);
-	if (IS_ERR(clk)) {
-		dev_err(ipu->dev, "clk_register mux di0 failed");
-		return PTR_ERR(clk);
-	}
-	ipu->pixel_clk_sel[0] = clk;
-	clk = clk_register_mux_pix_clk(ipu->dev, pixel_clk_1_sel,
-			(const char **)ipu_pixel_clk_sel,
-			ARRAY_SIZE(ipu_pixel_clk_sel),
-			0, ipu->id, 1, 0);
-	if (IS_ERR(clk)) {
-		dev_err(ipu->dev, "clk_register mux di1 failed");
-		return PTR_ERR(clk);
-	}
-	ipu->pixel_clk_sel[1] = clk;
+	ipu_id = ipu->id + 1;
 
-	clk = clk_register_div_pix_clk(ipu->dev, pixel_clk_0_div,
-				pixel_clk_0_sel, 0, ipu->id, 0, 0);
-	if (IS_ERR(clk)) {
-		dev_err(ipu->dev, "clk register di0 div failed");
-		return PTR_ERR(clk);
-	}
-	clk = clk_register_div_pix_clk(ipu->dev, pixel_clk_1_div,
-			pixel_clk_1_sel, CLK_SET_RATE_PARENT, ipu->id, 1, 0);
-	if (IS_ERR(clk)) {
-		dev_err(ipu->dev, "clk register di1 div failed");
-		return PTR_ERR(clk);
-	}
+	pixel_clk_parents[0] = pixel_clk_parent0;
+	pixel_clk_parents[1] = pixel_clk_parent1;
 
-	ipu->pixel_clk[0] = clk_register_gate_pix_clk(ipu->dev, pixel_clk_0,
-				pixel_clk_0_div, CLK_SET_RATE_PARENT,
-				ipu->id, 0, 0);
-	if (IS_ERR(ipu->pixel_clk[0])) {
-		dev_err(ipu->dev, "clk register di0 gate failed");
-		return PTR_ERR(ipu->pixel_clk[0]);
-	}
-	ipu->pixel_clk[1] = clk_register_gate_pix_clk(ipu->dev, pixel_clk_1,
-				pixel_clk_1_div, CLK_SET_RATE_PARENT,
-				ipu->id, 1, 0);
-	if (IS_ERR(ipu->pixel_clk[1])) {
-		dev_err(ipu->dev, "clk register di1 gate failed");
-		return PTR_ERR(ipu->pixel_clk[1]);
-	}
+	for (di = 0; di < 2; di++) {
+		snprintf(pixel_clk_sel, sizeof(pixel_clk_sel),
+				"ipu%u_pclk%u_sel", ipu_id, di);
+		snprintf(pixel_clk_parent0, sizeof(pixel_clk_parent0),
+				"ipu%u", ipu_id);
+		snprintf(pixel_clk_parent1, sizeof(pixel_clk_parent1),
+				"ipu%u_di%u", ipu_id, di);
+		clk = clk_register_mux_pix_clk(ipu->dev, pixel_clk_sel,
+				(const char **)pixel_clk_parents,
+				ARRAY_SIZE(pixel_clk_parents),
+				0, ipu->id, di, 0);
+		if (IS_ERR(clk)) {
+			dev_err(ipu->dev, "di%u mux clk register failed\n", di);
+			return PTR_ERR(clk);
+		}
+		ipu->pixel_clk_sel[di] = clk;
 
-	ret = clk_set_parent(ipu->pixel_clk_sel[0], ipu->ipu_clk);
-	if (ret) {
-		dev_err(ipu->dev, "clk set parent failed");
-		return ret;
-	}
+		snprintf(pixel_clk_div, sizeof(pixel_clk_div),
+				"ipu%u_pclk%u_div", ipu_id, di);
+		clk = clk_register_div_pix_clk(ipu->dev, pixel_clk_div,
+					pixel_clk_sel, 0, ipu->id, di, 0);
+		if (IS_ERR(clk)) {
+			dev_err(ipu->dev, "di%u div clk register failed\n", di);
+			return PTR_ERR(clk);
+		}
 
-	ret = clk_set_parent(ipu->pixel_clk_sel[1], ipu->ipu_clk);
-	if (ret) {
-		dev_err(ipu->dev, "clk set parent failed");
-		return ret;
-	}
+		snprintf(pixel_clk, sizeof(pixel_clk),
+				"ipu%u_pclk%u", ipu_id, di);
+		ipu->pixel_clk[di] = clk_register_gate_pix_clk(ipu->dev,
+					pixel_clk, pixel_clk_div,
+					CLK_SET_RATE_PARENT, ipu->id, di, 0);
+		if (IS_ERR(ipu->pixel_clk[di])) {
+			dev_err(ipu->dev,
+					"di%u gate clk register failed\n", di);
+			return PTR_ERR(ipu->pixel_clk[di]);
+		}
 
-	ipu->di_clk[0] = devm_clk_get(ipu->dev, "di0");
-	if (IS_ERR(ipu->di_clk[0])) {
-		dev_err(ipu->dev, "clk_get di0 failed");
-		return PTR_ERR(ipu->di_clk[0]);
-	}
-	ipu->di_clk[1] = devm_clk_get(ipu->dev, "di1");
-	if (IS_ERR(ipu->di_clk[1])) {
-		dev_err(ipu->dev, "clk_get di1 failed");
-		return PTR_ERR(ipu->di_clk[1]);
+		ret = clk_set_parent(ipu->pixel_clk_sel[di], ipu->ipu_clk);
+		if (ret) {
+			dev_err(ipu->dev, "pixel clk set parent failed\n");
+			return ret;
+		}
+
+		snprintf(di_clk, sizeof(di_clk), "di%u", di);
+		ipu->di_clk[di] = devm_clk_get(ipu->dev, di_clk);
+		if (IS_ERR(ipu->di_clk[di])) {
+			dev_err(ipu->dev, "di%u clk get failed\n", di);
+			return PTR_ERR(ipu->di_clk[di]);
+		}
+
+		snprintf(di_clk_sel, sizeof(di_clk_sel), "di%u_sel", di);
+		ipu->di_clk_sel[di] = devm_clk_get(ipu->dev, di_clk_sel);
+		if (IS_ERR(ipu->di_clk_sel[di])) {
+			dev_err(ipu->dev, "di%u sel clk get failed\n", di);
+			return PTR_ERR(ipu->di_clk_sel[di]);
+		}
 	}
 
-	ipu->di_clk_sel[0] = devm_clk_get(ipu->dev, "di0_sel");
-	if (IS_ERR(ipu->di_clk_sel[0])) {
-		dev_err(ipu->dev, "clk_get di0_sel failed");
-		return PTR_ERR(ipu->di_clk_sel[0]);
-	}
-	ipu->di_clk_sel[1] = devm_clk_get(ipu->dev, "di1_sel");
-	if (IS_ERR(ipu->di_clk_sel[1])) {
-		dev_err(ipu->dev, "clk_get di1_sel failed");
-		return PTR_ERR(ipu->di_clk_sel[1]);
-	}
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0)
+	if (ipu->id == 0)
+		clk_set_parent(ipu->pixel_clk_sel[0], ipu->di_clk[0]);
+#endif
+
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1)
+	if (ipu->id == 0)
+		clk_set_parent(ipu->pixel_clk_sel[0], ipu->di_clk[1]);
+#endif
+
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU2_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1)
+	if (ipu->id == 1)
+		clk_set_parent(ipu->pixel_clk_sel[1], ipu->di_clk[1]);
+#endif
+
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU2_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0)
+	if (ipu->id == 1)
+		clk_set_parent(ipu->pixel_clk_sel[1], ipu->di_clk[0]);
+#endif
+#endif
 
 	return 0;
 }
@@ -626,6 +629,12 @@ static int ipu_probe(struct platform_device *pdev)
 		ipu_cm_write(ipu, 0x00400000L | (IPU_MCU_T_DEFAULT << 18),
 			     IPU_DISP_GEN);
 	}
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS
+	else {
+		ipu->fg_csc_type = ipu->bg_csc_type = CSC_NONE;
+		ipu->color_key_4rgb = true;
+	}
+#endif
 
 	/* setup ipu clk tree after ipu reset  */
 	ret = ipu_clk_setup_enable(ipu);
@@ -3457,3 +3466,531 @@ static void __exit ipu_gen_uninit(void)
 }
 
 module_exit(ipu_gen_uninit);
+
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS
+/*!
+ * This function is called to initialize a logical IPU channel.
+ *
+ * @param	ipu	ipu handler
+ * @param       channel Input parameter for the logical channel ID to init.
+ *
+ * @param       params  Input parameter containing union of channel
+ *                      initialization parameters.
+ *
+ * @return      Returns 0 on success or negative error code on fail
+ */
+int32_t ipu_init_channel_late_init(struct ipu_soc *ipu, ipu_channel_t channel, ipu_channel_params_t *params)
+{
+	int ret = 0;
+	uint32_t ipu_conf;
+
+	dev_dbg(ipu->dev, "init channel = %d\n", IPU_CHAN_ID(channel));
+
+	ret = pm_runtime_get_sync(ipu->dev);
+	if (ret < 0) {
+		dev_err(ipu->dev, "ch = %d, pm_runtime_get failed:%d!\n",
+				IPU_CHAN_ID(channel), ret);
+		dump_stack();
+		return ret;
+	}
+	/*
+	 * Here, ret could be 1 if the device's runtime PM status was
+	 * already 'active', so clear it to be 0.
+	 */
+	ret = 0;
+
+	//_ipu_get(ipu);
+
+	mutex_lock(&ipu->mutex_lock);
+
+	/* Re-enable error interrupts every time a channel is initialized */
+	ipu_cm_write(ipu, 0xFFFFFFFF, IPU_INT_CTRL(5));
+	ipu_cm_write(ipu, 0xFFFFFFFF, IPU_INT_CTRL(6));
+	ipu_cm_write(ipu, 0xFFFFFFFF, IPU_INT_CTRL(9));
+	ipu_cm_write(ipu, 0xFFFFFFFF, IPU_INT_CTRL(10));
+
+	if (ipu->channel_init_mask & (1L << IPU_CHAN_ID(channel))) {
+		dev_warn(ipu->dev, "Warning: channel already initialized %d\n",
+			IPU_CHAN_ID(channel));
+	}
+
+	ipu_conf = ipu_cm_read(ipu, IPU_CONF);
+
+	switch (channel) {
+	case MEM_DC_SYNC:
+		if (params->mem_dc_sync.di > 1) {
+			ret = -EINVAL;
+			goto err;
+		}
+
+		ipu->dc_di_assignment[1] = params->mem_dc_sync.di;
+//		_ipu_dc_init(ipu, 1, params->mem_dc_sync.di,
+//			     params->mem_dc_sync.interlaced,
+//			     params->mem_dc_sync.out_pixel_fmt);
+		ipu->di_use_count[params->mem_dc_sync.di]++;
+		ipu->dc_use_count++;
+		ipu->dmfc_use_count++;
+		break;
+	case MEM_BG_SYNC:
+		if (params->mem_dp_bg_sync.di > 1) {
+			ret = -EINVAL;
+			goto err;
+		}
+
+		if (params->mem_dp_bg_sync.alpha_chan_en)
+			ipu->thrd_chan_en[IPU_CHAN_ID(channel)] = true;
+
+		ipu->dc_di_assignment[5] = params->mem_dp_bg_sync.di;
+//		_ipu_dp_init(ipu, channel, params->mem_dp_bg_sync.in_pixel_fmt,
+//			     params->mem_dp_bg_sync.out_pixel_fmt);
+//		_ipu_dc_init(ipu, 5, params->mem_dp_bg_sync.di,
+//			     params->mem_dp_bg_sync.interlaced,
+//			     params->mem_dp_bg_sync.out_pixel_fmt);
+		ipu->di_use_count[params->mem_dp_bg_sync.di]++;
+		ipu->dc_use_count++;
+		ipu->dp_use_count++;
+		ipu->dmfc_use_count++;
+		break;
+	case MEM_FG_SYNC:
+		_ipu_dp_init(ipu, channel, params->mem_dp_fg_sync.in_pixel_fmt,
+			     params->mem_dp_fg_sync.out_pixel_fmt);
+
+		if (params->mem_dp_fg_sync.alpha_chan_en)
+			ipu->thrd_chan_en[IPU_CHAN_ID(channel)] = true;
+
+		ipu->dc_use_count++;
+		ipu->dp_use_count++;
+		ipu->dmfc_use_count++;
+		break;
+	default:
+		dev_err(ipu->dev, "Missing channel initialization\n");
+		break;
+	}
+
+	ipu->channel_init_mask |= 1L << IPU_CHAN_ID(channel);
+
+	ipu_cm_write(ipu, ipu_conf, IPU_CONF);
+
+err:
+	mutex_unlock(&ipu->mutex_lock);
+	return ret;
+}
+EXPORT_SYMBOL(ipu_init_channel_late_init);
+
+/*!
+ * This function is called to initialize buffer(s) for logical IPU channel.
+ *
+ * @param	ipu		ipu handler
+ *
+ * @param       channel         Input parameter for the logical channel ID.
+ *
+ * @param       type            Input parameter which buffer to initialize.
+ *
+ * @param       pixel_fmt       Input parameter for pixel format of buffer.
+ *                              Pixel format is a FOURCC ASCII code.
+ *
+ * @param       width           Input parameter for width of buffer in pixels.
+ *
+ * @param       height          Input parameter for height of buffer in pixels.
+ *
+ * @param       stride          Input parameter for stride length of buffer
+ *                              in pixels.
+ *
+ * @param       rot_mode        Input parameter for rotation setting of buffer.
+ *                              A rotation setting other than
+ *                              IPU_ROTATE_VERT_FLIP
+ *                              should only be used for input buffers of
+ *                              rotation channels.
+ *
+ * @param       phyaddr_0       Input parameter buffer 0 physical address.
+ *
+ * @param       phyaddr_1       Input parameter buffer 1 physical address.
+ *                              Setting this to a value other than NULL enables
+ *                              double buffering mode.
+ *
+ * @param       phyaddr_2       Input parameter buffer 2 physical address.
+ *                              Setting this to a value other than NULL enables
+ *                              triple buffering mode, phyaddr_1 should not be
+ *                              NULL then.
+ *
+ * @param       u		private u offset for additional cropping,
+ *				zero if not used.
+ *
+ * @param       v		private v offset for additional cropping,
+ *				zero if not used.
+ *
+ * @return      Returns 0 on success or negative error code on fail
+ */
+int32_t ipu_init_channel_buffer_late_init(struct ipu_soc *ipu, ipu_channel_t channel,
+				ipu_buffer_t type,
+				uint32_t pixel_fmt,
+				uint16_t width, uint16_t height,
+				uint32_t stride,
+				ipu_rotate_mode_t rot_mode,
+				dma_addr_t phyaddr_0, dma_addr_t phyaddr_1,
+				dma_addr_t phyaddr_2,
+				uint32_t u, uint32_t v)
+{
+	uint32_t reg;
+	uint32_t dma_chan;
+	uint32_t burst_size;
+
+	dma_chan = channel_2_dma(channel, type);
+	if (!idma_is_valid(dma_chan))
+		return -EINVAL;
+
+	if (stride < width * bytes_per_pixel(pixel_fmt))
+		stride = width * bytes_per_pixel(pixel_fmt);
+
+	if (stride % 4) {
+		dev_err(ipu->dev,
+			"Stride not 32-bit aligned, stride = %d\n", stride);
+		return -EINVAL;
+	}
+	/* IC & IRT channels' width must be multiple of 8 pixels */
+	if ((_ipu_is_ic_chan(dma_chan) || _ipu_is_irt_chan(dma_chan))
+		&& (width % 8)) {
+		dev_err(ipu->dev, "Width must be 8 pixel multiple\n");
+		return -EINVAL;
+	}
+
+	if (_ipu_is_vdi_out_chan(dma_chan) &&
+		((width < 16) || (height < 16) || (width % 2) || (height % 4))) {
+		dev_err(ipu->dev, "vdi width/height limited err\n");
+		return -EINVAL;
+	}
+
+	/* IPUv3EX and IPUv3M support triple buffer */
+	if ((!_ipu_is_trb_chan(ipu, dma_chan)) && phyaddr_2) {
+		dev_err(ipu->dev, "Chan%d doesn't support triple buffer "
+				   "mode\n", dma_chan);
+		return -EINVAL;
+	}
+	if (!phyaddr_1 && phyaddr_2) {
+		dev_err(ipu->dev, "Chan%d's buf1 physical addr is NULL for "
+				   "triple buffer mode\n", dma_chan);
+		return -EINVAL;
+	}
+
+	mutex_lock(&ipu->mutex_lock);
+
+	/* Build parameter memory data for DMA channel */
+	_ipu_ch_param_init(ipu, dma_chan, pixel_fmt, width, height, stride, u, v, 0,
+			   phyaddr_0, phyaddr_1, phyaddr_2);
+
+	/* Set correlative channel parameter of local alpha channel */
+	if ((_ipu_is_ic_graphic_chan(dma_chan) ||
+	     _ipu_is_dp_graphic_chan(dma_chan)) &&
+	    (ipu->thrd_chan_en[IPU_CHAN_ID(channel)] == true)) {
+		_ipu_ch_param_set_alpha_use_separate_channel(ipu, dma_chan, true);
+		_ipu_ch_param_set_alpha_buffer_memory(ipu, dma_chan);
+		_ipu_ch_param_set_alpha_condition_read(ipu, dma_chan);
+		/* fix alpha width as 8 and burst size as 16*/
+		_ipu_ch_params_set_alpha_width(ipu, dma_chan, 8);
+		_ipu_ch_param_set_burst_size(ipu, dma_chan, 16);
+	} else if (_ipu_is_ic_graphic_chan(dma_chan) &&
+		   ipu_pixel_format_has_alpha(pixel_fmt))
+		_ipu_ch_param_set_alpha_use_separate_channel(ipu, dma_chan, false);
+
+	if (rot_mode)
+		_ipu_ch_param_set_rotation(ipu, dma_chan, rot_mode);
+
+	/* IC and ROT channels have restriction of 8 or 16 pix burst length */
+	if (_ipu_is_ic_chan(dma_chan) || _ipu_is_vdi_out_chan(dma_chan)) {
+		if ((width % 16) == 0)
+			_ipu_ch_param_set_burst_size(ipu, dma_chan, 16);
+		else
+			_ipu_ch_param_set_burst_size(ipu, dma_chan, 8);
+	} else if (_ipu_is_irt_chan(dma_chan)) {
+		_ipu_ch_param_set_burst_size(ipu, dma_chan, 8);
+		_ipu_ch_param_set_block_mode(ipu, dma_chan);
+	} else if (_ipu_is_dmfc_chan(dma_chan)) {
+		burst_size = _ipu_ch_param_get_burst_size(ipu, dma_chan);
+//		_ipu_dmfc_set_wait4eot(ipu, dma_chan, width);
+		_ipu_dmfc_set_burst_size(ipu, dma_chan, burst_size);
+	}
+
+	if (_ipu_disp_chan_is_interlaced(ipu, channel) ||
+		ipu->chan_is_interlaced[dma_chan])
+		_ipu_ch_param_set_interlaced_scan(ipu, dma_chan);
+
+	if (_ipu_is_ic_chan(dma_chan) || _ipu_is_irt_chan(dma_chan) ||
+		_ipu_is_vdi_out_chan(dma_chan)) {
+		burst_size = _ipu_ch_param_get_burst_size(ipu, dma_chan);
+		_ipu_ic_idma_init(ipu, dma_chan, width, height, burst_size,
+			rot_mode);
+	} else if (_ipu_is_smfc_chan(dma_chan)) {
+		burst_size = _ipu_ch_param_get_burst_size(ipu, dma_chan);
+		/*
+		 * This is different from IPUv3 spec, but it is confirmed
+		 * in IPUforum that SMFC burst size should be NPB[6:3]
+		 * when IDMAC works in 16-bit generic data mode.
+		 */
+		if (pixel_fmt == IPU_PIX_FMT_GENERIC)
+			/* 8 bits per pixel */
+			burst_size = burst_size >> 4;
+		else if (pixel_fmt == IPU_PIX_FMT_GENERIC_16)
+			/* 16 bits per pixel */
+			burst_size = burst_size >> 3;
+		else
+			burst_size = burst_size >> 2;
+		_ipu_smfc_set_burst_size(ipu, channel, burst_size-1);
+	}
+
+	switch (dma_chan) {
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+		_ipu_ch_param_set_axi_id(ipu, dma_chan, ipu->ch0123_axi);
+		break;
+	case 23:
+		_ipu_ch_param_set_axi_id(ipu, dma_chan, ipu->ch23_axi);
+		break;
+	case 27:
+		_ipu_ch_param_set_axi_id(ipu, dma_chan, ipu->ch27_axi);
+		break;
+	case 28:
+		_ipu_ch_param_set_axi_id(ipu, dma_chan, ipu->ch28_axi);
+		break;
+	default:
+		_ipu_ch_param_set_axi_id(ipu, dma_chan, ipu->normal_axi);
+		break;
+	}
+
+	if (idma_is_set(ipu, IDMAC_CHA_PRI(dma_chan), dma_chan) &&
+	    ipu->devtype == IPUv3H) {
+		uint32_t reg = IDMAC_CH_LOCK_EN_1(ipu->devtype);
+		uint32_t value = 0;
+
+		switch (dma_chan) {
+		case 5:
+			value = 0x3;
+			break;
+		case 11:
+			value = 0x3 << 2;
+			break;
+		case 12:
+			value = 0x3 << 4;
+			break;
+		case 14:
+			value = 0x3 << 6;
+			break;
+		case 15:
+			value = 0x3 << 8;
+			break;
+		case 20:
+			value = 0x3 << 10;
+			break;
+		case 21:
+			value = 0x3 << 12;
+			break;
+		case 22:
+			value = 0x3 << 14;
+			break;
+		case 23:
+			value = 0x3 << 16;
+			break;
+		case 27:
+			value = 0x3 << 18;
+			break;
+		case 28:
+			value = 0x3 << 20;
+			break;
+		case 45:
+			reg = IDMAC_CH_LOCK_EN_2(ipu->devtype);
+			value = 0x3 << 0;
+			break;
+		case 46:
+			reg = IDMAC_CH_LOCK_EN_2(ipu->devtype);
+			value = 0x3 << 2;
+			break;
+		case 47:
+			reg = IDMAC_CH_LOCK_EN_2(ipu->devtype);
+			value = 0x3 << 4;
+			break;
+		case 48:
+			reg = IDMAC_CH_LOCK_EN_2(ipu->devtype);
+			value = 0x3 << 6;
+			break;
+		case 49:
+			reg = IDMAC_CH_LOCK_EN_2(ipu->devtype);
+			value = 0x3 << 8;
+			break;
+		case 50:
+			reg = IDMAC_CH_LOCK_EN_2(ipu->devtype);
+			value = 0x3 << 10;
+			break;
+		default:
+			break;
+		}
+		value |= ipu_idmac_read(ipu, reg);
+		ipu_idmac_write(ipu, value, reg);
+	}
+
+	_ipu_ch_param_dump(ipu, dma_chan);
+
+	if (phyaddr_2 && ipu->devtype >= IPUv3EX) {
+		reg = ipu_cm_read(ipu, IPU_CHA_DB_MODE_SEL(dma_chan));
+		reg &= ~idma_mask(dma_chan);
+		ipu_cm_write(ipu, reg, IPU_CHA_DB_MODE_SEL(dma_chan));
+
+		reg = ipu_cm_read(ipu,
+				IPU_CHA_TRB_MODE_SEL(ipu->devtype, dma_chan));
+		reg |= idma_mask(dma_chan);
+		ipu_cm_write(ipu, reg,
+				IPU_CHA_TRB_MODE_SEL(ipu->devtype, dma_chan));
+
+		/* Set IDMAC third buffer's cpmem number */
+		/* See __ipu_ch_get_third_buf_cpmem_num() for mapping */
+		ipu_idmac_write(ipu, 0x00444047L,
+				IDMAC_SUB_ADDR_4(ipu->devtype));
+		ipu_idmac_write(ipu, 0x46004241L,
+				IDMAC_SUB_ADDR_3(ipu->devtype));
+		ipu_idmac_write(ipu, 0x00000045L,
+				IDMAC_SUB_ADDR_1(ipu->devtype));
+
+		/* Reset to buffer 0 */
+		ipu_cm_write(ipu, tri_cur_buf_mask(dma_chan),
+				IPU_CHA_TRIPLE_CUR_BUF(ipu->devtype, dma_chan));
+	} else {
+		reg = ipu_cm_read(ipu,
+				IPU_CHA_TRB_MODE_SEL(ipu->devtype, dma_chan));
+		reg &= ~idma_mask(dma_chan);
+		ipu_cm_write(ipu, reg,
+				IPU_CHA_TRB_MODE_SEL(ipu->devtype, dma_chan));
+
+		reg = ipu_cm_read(ipu, IPU_CHA_DB_MODE_SEL(dma_chan));
+		if (phyaddr_1)
+			reg |= idma_mask(dma_chan);
+		else
+			reg &= ~idma_mask(dma_chan);
+		ipu_cm_write(ipu, reg, IPU_CHA_DB_MODE_SEL(dma_chan));
+
+		/* Reset to buffer 0 */
+		ipu_cm_write(ipu, idma_mask(dma_chan),
+				IPU_CHA_CUR_BUF(ipu->devtype, dma_chan));
+
+	}
+
+	mutex_unlock(&ipu->mutex_lock);
+
+	return 0;
+}
+EXPORT_SYMBOL(ipu_init_channel_buffer_late_init);
+
+/*!
+ * This function disables the interrupt for the specified interrupt line.
+ * The interrupt lines are defined in \b ipu_irq_line enum.
+ *
+ * @param	ipu		ipu handler
+ * @param       irq             Interrupt line to disable interrupt for.
+ *
+ */
+void ipu_disable_irq_late_init(struct ipu_soc *ipu, uint32_t irq)
+{
+	uint32_t reg;
+	unsigned long lock_flags;
+
+	spin_lock_irqsave(&ipu->int_reg_spin_lock, lock_flags);
+
+	reg = ipu_cm_read(ipu, IPUIRQ_2_CTRLREG(irq));
+	reg &= ~IPUIRQ_2_MASK(irq);
+	ipu_cm_write(ipu, reg, IPUIRQ_2_CTRLREG(irq));
+
+	spin_unlock_irqrestore(&ipu->int_reg_spin_lock, lock_flags);
+}
+EXPORT_SYMBOL(ipu_disable_irq_late_init);
+
+/*!
+ * This function clears the interrupt for the specified interrupt line.
+ * The interrupt lines are defined in \b ipu_irq_line enum.
+ *
+ * @param	ipu		ipu handler
+ * @param       irq             Interrupt line to clear interrupt for.
+ *
+ */
+void ipu_clear_irq_late_init(struct ipu_soc *ipu, uint32_t irq)
+{
+	unsigned long lock_flags;
+
+	spin_lock_irqsave(&ipu->int_reg_spin_lock, lock_flags);
+
+	ipu_cm_write(ipu, IPUIRQ_2_MASK(irq),
+			IPUIRQ_2_STATREG(ipu->devtype, irq));
+
+	spin_unlock_irqrestore(&ipu->int_reg_spin_lock, lock_flags);
+}
+EXPORT_SYMBOL(ipu_clear_irq_late_init);
+
+/*!
+ * This function registers an interrupt handler function for the specified
+ * interrupt line. The interrupt lines are defined in \b ipu_irq_line enum.
+ *
+ * @param	ipu		ipu handler
+ * @param       irq             Interrupt line to get status for.
+ *
+ * @param       handler         Input parameter for address of the handler
+ *                              function.
+ *
+ * @param       irq_flags       Flags for interrupt mode. Currently not used.
+ *
+ * @param       devname         Input parameter for string name of driver
+ *                              registering the handler.
+ *
+ * @param       dev_id          Input parameter for pointer of data to be
+ *                              passed to the handler.
+ *
+ * @return      This function returns 0 on success or negative error code on
+ *              fail.
+ */
+int ipu_request_irq_late_init(struct ipu_soc *ipu, uint32_t irq,
+		    irqreturn_t(*handler) (int, void *),
+		    uint32_t irq_flags, const char *devname, void *dev_id)
+{
+	uint32_t reg;
+	unsigned long lock_flags;
+	int ret = 0;
+
+	BUG_ON(irq >= IPU_IRQ_COUNT);
+
+	spin_lock_irqsave(&ipu->int_reg_spin_lock, lock_flags);
+
+	if (ipu->irq_list[irq].handler != NULL) {
+		dev_err(ipu->dev,
+			"handler already installed on irq %d\n", irq);
+		ret = -EINVAL;
+		goto out;
+	}
+
+	/*
+	 * Check sync interrupt handler only, since we do nothing for
+	 * error interrupts but than print out register values in the
+	 * error interrupt source handler.
+	 */
+	if (_ipu_is_sync_irq(irq) && (handler == NULL)) {
+		dev_err(ipu->dev, "handler is NULL for sync irq %d\n", irq);
+		ret = -EINVAL;
+		goto out;
+	}
+
+	ipu->irq_list[irq].handler = handler;
+	ipu->irq_list[irq].flags = irq_flags;
+	ipu->irq_list[irq].dev_id = dev_id;
+	ipu->irq_list[irq].name = devname;
+
+	/* clear irq stat for previous use */
+	ipu_cm_write(ipu, IPUIRQ_2_MASK(irq),
+			IPUIRQ_2_STATREG(ipu->devtype, irq));
+	/* enable the interrupt */
+	reg = ipu_cm_read(ipu, IPUIRQ_2_CTRLREG(irq));
+	reg |= IPUIRQ_2_MASK(irq);
+	ipu_cm_write(ipu, reg, IPUIRQ_2_CTRLREG(irq));
+out:
+	spin_unlock_irqrestore(&ipu->int_reg_spin_lock, lock_flags);
+
+	return ret;
+}
+EXPORT_SYMBOL(ipu_request_irq_late_init);
+#endif
+

@@ -837,6 +837,94 @@ config SOC_IMX6Q
 	help
 	  This enables support for Freescale i.MX6 Quad processor.
 
+config MX6_CLK_FOR_BOOTUI_TRANS
+	bool "MX6 clk setting for smooth UI transtion from bootloader to kernel"
+	depends on SOC_IMX6Q
+	default n
+	help
+	 This is choosed to keep enable IPU related clocks and PWM clocks and
+	 avoid setting IPU related clocks' parents when initializing clock tree
+	 so that bootloader splashimage can transition to kernel smoothly.
+
+choice
+	depends on MX6_CLK_FOR_BOOTUI_TRANS
+	prompt "Select Display Interface"
+
+config MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU1_DI0
+	bool "Smooth UI transtion on LCD, IPU1, DI0."
+	help
+	 This is choosed to keep enable IPU related setting on LCD panel which
+	 is connected on IPU1 DI0 port.
+
+config MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU1_DI1
+	bool "Smooth UI transtion on LCD, IPU1, DI1."
+	help
+	 This is choosed to keep enable IPU related setting on LCD panel which
+	 is connected on IPU1 DI1 port.
+
+config MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU2_DI0
+	bool "Smooth UI transtion on LCD, IPU2, DI0."
+	help
+	 This is choosed to keep enable IPU related setting on LCD panel which
+	 is connected on IPU2 DI0 port.
+
+config MX6_CLK_FOR_BOOTUI_TRANS_LCD_IPU2_DI1
+	bool "Smooth UI transtion on LCD, IPU2, DI1."
+	help
+	 This is choosed to keep enable IPU related setting on LCD panel which
+	 is connected on IPU2 DI1 port.
+
+config MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI0
+	bool "Smooth UI transtion on LVDS, IPU1, DI0."
+	help
+	 This is choosed to keep enable IPU related setting on LVDS panel which
+	 is connected on IPU1 DI0 port.
+
+config MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU1_DI1
+	bool "Smooth UI transtion on LVDS, IPU1, DI1."
+	help
+	 This is choosed to keep enable IPU related setting on LVDS panel which
+	 is connected on IPU1 DI1 port.
+
+config MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI0
+	bool "Smooth UI transtion on LVDS, IPU2, DI0."
+	help
+	 This is choosed to keep enable IPU related setting on LVDS panel which
+	 is connected on IPU2 DI0 port.
+
+config MX6_CLK_FOR_BOOTUI_TRANS_LVDS_IPU2_DI1
+	bool "Smooth UI transtion on LVDS, IPU2, DI1."
+	help
+	 This is choosed to keep enable IPU related setting on LVDS panel which
+	 is connected on IPU2 DI1 port.
+
+config MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0
+	bool "Smooth UI transtion on HDMI, IPU1, DI0."
+	help
+	 This is choosed to keep enable IPU related setting on HDMI display which
+	 is connected on IPU1 DI0 port.
+
+config MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1
+	bool "Smooth UI transtion on HDMI, IPU1, DI1."
+	help
+	 This is choosed to keep enable IPU related setting on HDMI display which
+	 is connected on IPU1 DI1 port.
+
+config MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0
+	bool "Smooth UI transtion on HDMI, IPU2, DI0."
+	help
+	 This is choosed to keep enable IPU related setting on HDMI display which
+	 is connected on IPU2 DI0 port.
+
+
+config MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1
+	bool "Smooth UI transtion on HDMI, IPU2, DI1."
+	help
+	 This is choosed to keep enable IPU related setting on HDMI display which
+	 is connected on IPU2 DI1 port.
+
+endchoice
+
 config SOC_IMX6SL
 	bool "i.MX6 SoloLite support"
 	select HAVE_IMX_RNG

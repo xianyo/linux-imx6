@@ -1750,8 +1750,16 @@ static void mxc_hdmi_clear_overflow(struct mxc_hdmi *hdmi)
 static void hdmi_enable_overflow_interrupts(void)
 {
 	pr_debug("%s\n", __func__);
+
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0)
+   /* Skip */
+#else
 	hdmi_writeb(0, HDMI_FC_MASK2);
 	hdmi_writeb(0, HDMI_IH_MUTE_FC_STAT2);
+#endif
 }
 
 static void hdmi_disable_overflow_interrupts(void)
@@ -2010,6 +2018,12 @@ static void hotplug_worker(struct work_struct *work)
 	char event_string[32];
 	char *envp[] = { event_string, NULL };
 
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0)
+   int edid_status = HDMI_EDID_FAIL;
+#endif
 	phy_int_stat = hdmi->latest_intr_stat;
 	phy_int_pol = hdmi_readb(HDMI_PHY_POL0);
 
@@ -2022,8 +2036,29 @@ static void hotplug_worker(struct work_struct *work)
 		if (phy_int_pol & HDMI_PHY_HPD) {
 			/* Plugin event */
 			dev_dbg(&hdmi->pdev->dev, "EVENT=plugin\n");
-			mxc_hdmi_cable_connected(hdmi);
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0)
+           if (hdmi->fb_reg)
+               mxc_hdmi_cable_connected(hdmi);
+           else {
+               hdmi->cable_plugin = true;
+               hdmi_set_blank_state(1);
+               /* Plugin event */
+               dev_dbg(&hdmi->pdev->dev, "cable plugin\n");
+               edid_status = mxc_hdmi_read_edid(hdmi);
 
+               /* Read EDID again if first EDID read failed */
+               if (edid_status == HDMI_EDID_NO_MODES ||
+                   edid_status == HDMI_EDID_FAIL) {
+                   dev_info(&hdmi->pdev->dev, "Read EDID again\n");
+                   edid_status = mxc_hdmi_read_edid(hdmi);
+               }
+           }
+#else
+			mxc_hdmi_cable_connected(hdmi);
+#endif
 			/* Make HPD intr active low to capture unplug event */
 			val = hdmi_readb(HDMI_PHY_POL0);
 			val &= ~HDMI_PHY_HPD;
@@ -2062,6 +2097,12 @@ static void hotplug_worker(struct work_struct *work)
 			mxc_hdmi_cec_handle(0x100);
 #endif
 
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0)
+           hdmi->fb_reg = true;
+#endif
 		} else
 			dev_dbg(&hdmi->pdev->dev, "EVENT=none?\n");
 	}
@@ -2274,6 +2315,21 @@ static void mxc_hdmi_setup(struct mxc_hdmi *hdmi, unsigned long event)
 
 }
 
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0)
+void mxc_hdmi_late_init_done(struct mxc_dispdrv_handle *disp)
+{
+   struct mxc_hdmi *hdmi = mxc_dispdrv_getdata(disp);
+
+   dev_dbg(&hdmi->pdev->dev, "%s\n", __func__);
+
+   hdmi->fb_reg = true;
+   hdmi->dft_mode_set = false;
+}
+#endif
+
 /* Wait until we are registered to enable interrupts */
 static void mxc_hdmi_fb_registered(struct mxc_hdmi *hdmi)
 {
@@ -2302,7 +2358,16 @@ static void mxc_hdmi_fb_registered(struct mxc_hdmi *hdmi)
 	/* Unmute interrupts */
 	hdmi_writeb(~HDMI_IH_MUTE_PHY_STAT0_HPD, HDMI_IH_MUTE_PHY_STAT0);
 
-	hdmi->fb_reg = true;
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0)
+   hdmi->phy_enabled = true;
+   hdmi->blank = FB_BLANK_UNBLANK;
+   /* Skip hdmi->fb_reg. */
+#else
+    hdmi->fb_reg = true;
+#endif
 
 	spin_unlock_irqrestore(&hdmi->irq_lock, flags);
 
@@ -2333,6 +2398,24 @@ static int mxc_hdmi_fb_event(struct notifier_block *nb,
 
 	case FB_EVENT_MODE_CHANGE:
 		dev_dbg(&hdmi->pdev->dev, "event=FB_EVENT_MODE_CHANGE\n");
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0)
+       if (!hdmi->fb_reg) {
+           struct fb_videomode m;
+
+           fb_var_to_videomode(&m, &hdmi->fbi->var);
+           hdmi->blank = FB_BLANK_UNBLANK;
+
+           if (!hdmi->requesting_vga_for_initialization) {
+               /* Save mode if this isn't the result of requesting
+                * vga default. */
+               memcpy(&hdmi->previous_non_vga_mode, &m,
+                       sizeof(struct fb_videomode));
+           }
+       }
+#endif
 		mode = (struct fb_videomode *)event->data;
 		if (hdmi->fbi != NULL)
 			hdmi->yres_virtual = hdmi->fbi->var.yres_virtual;
@@ -2389,7 +2472,15 @@ static int mxc_hdmi_fb_event(struct notifier_block *nb,
 			clk_enable(hdmi->mipi_core_clk);
 			clk_enable(hdmi->hdmi_iahb_clk);
 			clk_enable(hdmi->hdmi_isfr_clk);
-			mxc_hdmi_phy_init(hdmi);
+
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0)
+           mxc_hdmi_setup(hdmi, val);
+#else
+            mxc_hdmi_phy_init(hdmi);
+#endif
 		}
 		break;
 
@@ -2736,6 +2827,12 @@ static struct mxc_dispdrv_driver mxc_hdmi_drv = {
 	.deinit	= mxc_hdmi_disp_deinit,
 	.enable = mxc_hdmi_power_on,
 	.disable = mxc_hdmi_power_off,
+#if defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI0) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU1_DI1) || \
+	defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI1) || \
+   defined(CONFIG_MX6_CLK_FOR_BOOTUI_TRANS_HDMI_IPU2_DI0)
+   .late_init_done = mxc_hdmi_late_init_done,
+#endif
 };
 
 

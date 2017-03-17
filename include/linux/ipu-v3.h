@@ -767,4 +767,27 @@ struct ipuv3_fb_platform_data {
 	bool				resolve;
 };
 
+#ifdef CONFIG_MX6_CLK_FOR_BOOTUI_TRANS
+void ipu_disable_irq_late_init(struct ipu_soc *ipu, uint32_t irq);
+void ipu_clear_irq_late_init(struct ipu_soc *ipu, uint32_t irq);
+int ipu_request_irq_late_init(struct ipu_soc *ipu, uint32_t irq,
+                                irqreturn_t(*handler) (int, void *),
+                                uint32_t irq_flags, const char *devname, void *dev_id);
+int32_t ipu_disp_get_window_pos_late_init(struct ipu_soc *ipu, ipu_channel_t channel, int16_t *x_pos,
+                                int16_t *y_pos);
+int32_t ipu_disp_set_global_alpha_late_init(struct ipu_soc *ipu, ipu_channel_t channel, bool enable,
+                                  uint8_t alpha);
+int32_t ipu_disp_set_color_key_late_init(struct ipu_soc *ipu, ipu_channel_t channel, bool enable,
+                               uint32_t colorKey);
+int32_t ipu_init_channel_late_init(struct ipu_soc *ipu, ipu_channel_t channel, ipu_channel_params_t *params);
+int32_t ipu_init_channel_buffer_late_init(struct ipu_soc *ipu, ipu_channel_t channel, ipu_buffer_t type,
+                                uint32_t pixel_fmt,
+                                uint16_t width, uint16_t height,
+                                uint32_t stride,
+                                ipu_rotate_mode_t rot_mode,
+                                dma_addr_t phyaddr_0, dma_addr_t phyaddr_1,
+                                dma_addr_t phyaddr_2,
+                                uint32_t u, uint32_t v);
+#endif
+
 #endif /* __LINUX_IPU_V3_H_ */
