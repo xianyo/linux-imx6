@@ -439,6 +439,8 @@ static void __init imx6q_s606_init(void)
 	if (gpio_is_valid(LCD_GPIO) &&!gpio_request_one(LCD_GPIO, GPIOF_DIR_OUT, "LCD_GPIO"))
 		gpio_set_value_cansleep(LCD_GPIO, 1);
 
+	if (gpio_is_valid(AUD_PWREN) &&!gpio_request_one(AUD_PWREN, GPIOF_DIR_OUT, "AUD_PWREN"))
+		gpio_set_value_cansleep(AUD_PWREN, 1);
 
 }
 
