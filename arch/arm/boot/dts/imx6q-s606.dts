@@ -37,6 +37,11 @@
 	status = "okay";
 };
 
+&ipu2 {
+	bypass_reset = <0>;
+	status = "okay";
+};
+
 &mxclcd0 {
 	ipu_id = <0>;
 	disp_id = <0>;
@@ -67,14 +72,14 @@
   late_init = <0>;
   fb_base = <0x13000000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
   fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
-	status = "disabled";
+	status = "okay";
 };
 
 &mxcfb4 {
   late_init = <0>;
   fb_base = <0x13000000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
   fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
-	status = "disabled";
+	status = "okay";
 };
 
 &sata {

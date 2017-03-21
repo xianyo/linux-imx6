@@ -71,7 +71,7 @@
 		model = "wm8960-audio";
 		cpu-dai = <&ssi2>;
 		audio-codec = <&codec>;
-		asrc-controller = <&asrc>;
+	/*	asrc-controller = <&asrc>; */
 		codec-master;
 		gpr = <&gpr>;
 		/*
@@ -82,6 +82,7 @@
 		 */
 		hp-det = <3 0>;
 		hp-det-gpios = <&gpio7 13 0>;
+		status = "okay";
 		audio-routing =
 			"Headset Jack", "HP_L",
 			"Headset Jack", "HP_R",
@@ -112,7 +113,7 @@
 		compatible = "fsl,mxc_sdc_fb";
 		disp_dev = "lcd";
 		interface_pix_fmt = "RGB24";
-		mode_str ="1920x1080";
+		mode_str ="720P";
 		default_bpp = <32>;
 		int_clk = <0>;
     late_init = <0>;
@@ -201,25 +202,8 @@
 		default-brightness-level = <94>;
 	};
 
-	v4l2_cap_0 {
-		compatible = "fsl,imx6q-v4l2-capture";
-		ipu_id = <0>;
-		csi_id = <0>;
-		mclk_source = <0>;
-		status = "okay";
-	};
-
-	v4l2_cap_1 {
-		compatible = "fsl,imx6q-v4l2-capture";
-		ipu_id = <0>;
-		csi_id = <1>;
-		mclk_source = <0>;
-		status = "okay";
-	};
-
-	v4l2_out {
-		compatible = "fsl,mxc_v4l2_output";
-		status = "okay";
+	caam_keyblob {
+		compatible = "fsl,sec-v4.0-keyblob";
 	};
 
 	minipcie_ctrl {
@@ -334,7 +318,9 @@
 		reg = <0x1a>;
 		clocks = <&clks 201>;
 		clock-names = "mclk";
+		clock-frequency = <12000000>;
 		wlf,shared-lrclk;
+	  status = "okay";
 	};
 
 
