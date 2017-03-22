@@ -71,7 +71,9 @@
 		model = "wm8960-audio";
 		cpu-dai = <&ssi2>;
 		audio-codec = <&codec>;
-	/*	asrc-controller = <&asrc>; */
+	  asrc-controller = <&asrc>;
+		mux-int-port = <2>;
+		mux-ext-port = <3>;
 		codec-master;
 		gpr = <&gpr>;
 		/*
@@ -678,7 +680,7 @@
   
 &gpc {
 	/* use ldo-bypass, u-boot will check it and configure */
-	fsl,ldo-bypass = <0>;
+	fsl,ldo-bypass = <1>;
 	fsl,wdog-reset = <1>;
 };
 

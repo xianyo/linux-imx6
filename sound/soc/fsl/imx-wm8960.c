@@ -25,7 +25,7 @@
 #include <linux/mfd/syscon.h>
 #include "../codecs/wm8960.h"
 #include "fsl_sai.h"
-
+#include "imx-audmux.h"
 #define DAI_NAME_SIZE	32
 
 struct imx_wm8960_data {
@@ -396,12 +396,13 @@ static int imx_hifi_startup(struct snd_pcm_substream *substream)
 	int ret = 0;
 
 	data->is_stream_opened[tx] = true;
+#if 0
 	if (data->is_stream_opened[tx] != sai->is_stream_opened[tx] ||
 	    data->is_stream_opened[!tx] != sai->is_stream_opened[!tx]) {
 		data->is_stream_opened[tx] = false;
 		return -EBUSY;
 	}
-
+#endif
 	if (!data->is_codec_master) {
 		ret = snd_pcm_hw_constraint_list(substream->runtime, 0,
 				SNDRV_PCM_HW_PARAM_RATE, &imx_wm8960_rate_constraints);
@@ -517,15 +518,57 @@ static int imx_wm8960_probe(struct platform_device *pdev)
 	struct device_node *asrc_np;
 	u32 width;
 	int ret;
+	struct device_node *np = pdev->dev.of_node;
+	int int_port, ext_port;
 
 	priv->pdev = pdev;
-
 	cpu_np = of_parse_phandle(pdev->dev.of_node, "cpu-dai", 0);
 	if (!cpu_np) {
 		dev_err(&pdev->dev, "cpu dai phandle missing or invalid\n");
 		ret = -EINVAL;
 		goto fail;
 	}
+
+	if (!strstr(cpu_np->name, "ssi"))
+		goto audmux_bypass;
+
+	ret = of_property_read_u32(np, "mux-int-port", &int_port);
+	if (ret) {
+		dev_err(&pdev->dev, "mux-int-port missing or invalid\n");
+		return ret;
+	}
+	ret = of_property_read_u32(np, "mux-ext-port", &ext_port);
+	if (ret) {
+		dev_err(&pdev->dev, "mux-ext-port missing or invalid\n");
+		return ret;
+	}
+
+	/*
+	 * The port numbering in the hardware manual starts at 1, while
+	 * the audmux API expects it starts at 0.
+	 */
+	int_port--;
+	ext_port--;
+	ret = imx_audmux_v2_configure_port(int_port,
+			IMX_AUDMUX_V2_PTCR_SYN |
+			IMX_AUDMUX_V2_PTCR_TFSEL(ext_port) |
+			IMX_AUDMUX_V2_PTCR_TCSEL(ext_port) |
+			IMX_AUDMUX_V2_PTCR_TFSDIR |
+			IMX_AUDMUX_V2_PTCR_TCLKDIR,
+			IMX_AUDMUX_V2_PDCR_RXDSEL(ext_port));
+	if (ret) {
+		dev_err(&pdev->dev, "audmux internal port setup failed\n");
+		return ret;
+	}
+	ret = imx_audmux_v2_configure_port(ext_port,
+			IMX_AUDMUX_V2_PTCR_SYN,
+			IMX_AUDMUX_V2_PDCR_RXDSEL(int_port));
+	if (ret) {
+		dev_err(&pdev->dev, "audmux external port setup failed\n");
+		return ret;
+	}
+
+audmux_bypass:
 
 	codec_np = of_parse_phandle(pdev->dev.of_node, "audio-codec", 0);
 	if (!codec_np) {
