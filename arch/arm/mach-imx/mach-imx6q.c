@@ -419,6 +419,7 @@ static const struct of_dev_auxdata imx6q_auxdata_lookup[] __initconst = {
 #define DISP0_BLEN	IMX_GPIO_NR(6, 31)
 #define LCD_GPIO	IMX_GPIO_NR(4, 20)
 #define EINT_RST	IMX_GPIO_NR(1, 25)
+#define EXT_UART_RST	IMX_GPIO_NR(3, 20)
 
 
 
@@ -442,6 +443,8 @@ static void __init imx6q_s606_init(void)
 	if (gpio_is_valid(AUD_PWREN) &&!gpio_request_one(AUD_PWREN, GPIOF_DIR_OUT, "AUD_PWREN"))
 		gpio_set_value_cansleep(AUD_PWREN, 1);
 
+	if (gpio_is_valid(EXT_UART_RST) &&!gpio_request_one(EXT_UART_RST, GPIOF_DIR_OUT, "EXT_UART_RST"))
+		gpio_set_value_cansleep(EXT_UART_RST, 1);
 }
 
 static void __init imx6q_init_machine(void)
