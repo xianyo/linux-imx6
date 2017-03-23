@@ -278,6 +278,15 @@
 	pinctrl-0 = <&pinctrl_ecspi5>;
 	status = "okay";
 
+	sc16is762: sc16is762@0 {
+		compatible = "nxp,sc16is762";
+		reg = <0>;
+		interrupt-parent = <&gpio3>;
+		interrupts = <19 IRQ_TYPE_EDGE_FALLING>;
+		spi-max-frequency = <4000000>;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
 };
 
 &fec {
