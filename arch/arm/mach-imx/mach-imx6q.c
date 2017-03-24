@@ -445,6 +445,9 @@ static void __init imx6q_s606_init(void)
 
 	if (gpio_is_valid(EXT_UART_RST) &&!gpio_request_one(EXT_UART_RST, GPIOF_DIR_OUT, "EXT_UART_RST"))
 		gpio_set_value_cansleep(EXT_UART_RST, 1);
+
+  if (gpio_is_valid(WLAN_PWREN) &&!gpio_request_one(WLAN_PWREN, GPIOF_DIR_OUT, "WLAN_PWREN"))
+		gpio_set_value_cansleep(WLAN_PWREN, 1);
 }
 
 static void __init imx6q_init_machine(void)
