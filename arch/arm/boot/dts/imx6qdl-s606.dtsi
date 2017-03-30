@@ -227,27 +227,6 @@
 		status = "okay";
 	};
 
-	v4l2_cap_0 {
-		compatible = "fsl,imx6q-v4l2-capture";
-		ipu_id = <0>;
-		csi_id = <0>;
-		mclk_source = <0>;
-		status = "okay";
-	};
-
-	v4l2_cap_1 {
-		compatible = "fsl,imx6q-v4l2-capture";
-		ipu_id = <0>;
-		csi_id = <1>;
-		mclk_source = <0>;
-		status = "okay";
-	};
-
-	v4l2_out {
-		compatible = "fsl,mxc_v4l2_output";
-		status = "okay";
-	};
-
 };
 
 &audmux {
@@ -342,7 +321,12 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_i2c3>;
 	status = "okay";
-
+/*
+	vga: edid@50 {
+		compatible = "fsl,imx6-hdmi-i2c";
+		reg = <0x50>;
+	};
+*/
 };
 
 &iomuxc {
@@ -679,6 +663,9 @@
 &dcic2 {
 	dcic_id = <1>;
 	dcic_mux = "dcic-lvds1";
+/*
+	dcic_mux = "dcic-ipu1-di1";
+*/
 	status = "okay";
 };
 
@@ -710,8 +697,8 @@
 };
 
 &hdmi_core {
-	ipu_id = <0>;
-	disp_id = <0>;
+	ipu_id = <1>;
+	disp_id = <1>;
 	status = "okay";
 };
 
@@ -727,6 +714,7 @@
 	lvds-channel@0 {
 		fsl,data-mapping = "spwg";
 		fsl,data-width = <18>;
+		primary;
 		status = "okay";
 
 		display-timings {
@@ -748,7 +736,6 @@
 	lvds-channel@1 {
 		fsl,data-mapping = "spwg";
 		fsl,data-width = <18>;
-		primary;
 		status = "okay";
 
 		display-timings {
@@ -766,14 +753,6 @@
 			};
 		};
 	};
-};
-
-&mipi_csi {
-	status = "okay";
-	ipu_id = <0>;
-	csi_id = <1>;
-	v_channel = <0>;
-	lanes = <2>;
 };
 
 &pcie {

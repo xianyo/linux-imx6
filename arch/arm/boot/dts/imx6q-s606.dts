@@ -22,22 +22,17 @@
 
 &ldb {
 	lvds-channel@0 {
-		crtc = "ipu2-di0";
+		crtc = "ipu1-di0";
 	  status = "okay";
 	};
 
 	lvds-channel@1 {
-		crtc = "ipu2-di1";
+		crtc = "ipu2-di0";
 	  status = "okay";
 	};
 };
 
 &ipu1 {
-	bypass_reset = <0>;
-	status = "okay";
-};
-
-&ipu2 {
 	bypass_reset = <0>;
 	status = "okay";
 };
