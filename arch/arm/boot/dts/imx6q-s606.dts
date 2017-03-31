@@ -27,7 +27,7 @@
 	};
 
 	lvds-channel@1 {
-		crtc = "ipu2-di0";
+		crtc = "ipu2-di1";
 	  status = "okay";
 	};
 };
@@ -51,28 +51,28 @@
 
 &mxcfb1 {
   late_init = <0>;
-  fb_base = <0x13000000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
+  fb_base = <0x18800000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
   fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
 	status = "okay";
 };
 
 &mxcfb2 {
   late_init = <0>;
-  fb_base = <0x13000000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
+  fb_base = <0x18800000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
   fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
 	status = "okay";
 };
 
 &mxcfb3 {
   late_init = <0>;
-  fb_base = <0x13000000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
+  fb_base = <0x18800000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
   fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
 	status = "okay";
 };
 
 &mxcfb4 {
   late_init = <0>;
-  fb_base = <0x13000000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
+  fb_base = <0x18800000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
   fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
 	status = "okay";
 };
