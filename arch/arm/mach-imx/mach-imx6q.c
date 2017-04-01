@@ -420,13 +420,12 @@ static const struct of_dev_auxdata imx6q_auxdata_lookup[] __initconst = {
 #define LCD_GPIO	IMX_GPIO_NR(4, 20)
 #define EINT_RST	IMX_GPIO_NR(1, 25)
 #define EXT_UART_RST	IMX_GPIO_NR(3, 20)
-
+#define UART3_RS485_RS422	IMX_GPIO_NR(2, 31)
 
 
 static void __init imx6q_s606_init(void)
 {
 	pr_warn("imx6q_s606_init to initialize soc device\n");
-
 
 	if (gpio_is_valid(LCD_PWREN) &&!gpio_request_one(LCD_PWREN, GPIOF_DIR_OUT, "LCD_PWREN"))
 		gpio_set_value_cansleep(LCD_PWREN, 1);
@@ -448,6 +447,9 @@ static void __init imx6q_s606_init(void)
 
   if (gpio_is_valid(WLAN_PWREN) &&!gpio_request_one(WLAN_PWREN, GPIOF_DIR_OUT, "WLAN_PWREN"))
 		gpio_set_value_cansleep(WLAN_PWREN, 1);
+
+  if (gpio_is_valid(UART3_RS485_RS422) &&!gpio_request_one(UART3_RS485_RS422, GPIOF_DIR_OUT, "UART3_RS485_RS422"))
+		gpio_set_value_cansleep(UART3_RS485_RS422, 0);
 }
 
 static void __init imx6q_init_machine(void)

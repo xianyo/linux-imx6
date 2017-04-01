@@ -50,6 +50,10 @@
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
+#include <dt-bindings/gpio/gpio.h>
+
 #include <asm/irq.h>
 #include <linux/platform_data/serial-imx.h>
 #include <linux/platform_data/dma-imx.h>
@@ -250,6 +254,8 @@ struct imx_port {
 	unsigned int            saved_reg[10];
 #define DMA_TX_IS_WORKING 1
 	unsigned long		flags;
+  int rs485_gpio;
+  int rs485_send_active;
 };
 
 struct imx_port_ucrs {
@@ -397,6 +403,10 @@ static void imx_stop_tx(struct uart_port *port)
 {
 	struct imx_port *sport = (struct imx_port *)port;
 	unsigned long temp;
+
+	if (gpio_is_valid(sport->rs485_gpio)) {
+		gpio_set_value(sport->rs485_gpio, !sport->rs485_send_active);
+	}
 
 	if (USE_IRDA(sport)) {
 		/* half duplex - wait for end of transmission */
@@ -607,6 +617,10 @@ static void imx_start_tx(struct uart_port *port)
 {
 	struct imx_port *sport = (struct imx_port *)port;
 	unsigned long temp;
+
+	if (gpio_is_valid(sport->rs485_gpio)) {
+		gpio_set_value(sport->rs485_gpio, sport->rs485_send_active);
+	}
 
 	if (USE_IRDA(sport)) {
 		/* half duplex in IrDA mode; have to disable receive mode */
@@ -2010,7 +2024,7 @@ static int serial_imx_probe_dt(struct imx_port *sport,
 	struct device_node *np = pdev->dev.of_node;
 	const struct of_device_id *of_id =
 			of_match_device(imx_uart_dt_ids, &pdev->dev);
-	int ret;
+	int ret,flags;
 
 	if (!np)
 		/* no device tree device */
@@ -2031,6 +2045,21 @@ static int serial_imx_probe_dt(struct imx_port *sport,
 
 	if (of_get_property(np, "fsl,dte-mode", NULL))
 		sport->dte_mode = 1;
+
+	sport->rs485_gpio = of_get_named_gpio_flags(np, "rs485-gpio", 0, &flags);
+	if (gpio_is_valid(sport->rs485_gpio)) {
+		ret = gpio_request(sport->rs485_gpio, "fsl-serial-rs485");
+		if (ret < 0)
+      dev_err(&pdev->dev, "failed to rs485 gpio_request, errno %d\n", ret);
+
+		ret = gpio_direction_output(sport->rs485_gpio, !flags);
+		if (ret < 0)
+      dev_err(&pdev->dev, "failed to rs485 gpio_direction_output, errno %d\n", ret);
+
+    sport->rs485_send_active = flags;
+	} else {
+		sport->rs485_gpio = -EINVAL;
+	}
 
 	sport->devdata = of_id->data;
 
