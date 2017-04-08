@@ -3804,13 +3804,23 @@ static void rtl_rar_set(struct rtl8169_private *tp, u8 *addr)
 	rtl_unlock_work(tp);
 }
 
+extern unsigned char themacaddr[ETH_ALEN];
+
 static int rtl_set_mac_address(struct net_device *dev, void *p)
 {
 	struct rtl8169_private *tp = netdev_priv(dev);
 	struct sockaddr *addr = p;
 
-	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(addr->sa_data)){
+	    if (!is_valid_ether_addr(themacaddr)){
+            printk(KERN_ERR "r8169 mac null \n");
+		    return -EADDRNOTAVAIL;
+        }else{
+            memcpy(dev->dev_addr, themacaddr, ETH_ALEN);
+            rtl_rar_set(tp, dev->dev_addr);
+            return 0;
+        }
+    }
 
 	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
 
@@ -7124,6 +7134,16 @@ rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	/* Get MAC address */
 	for (i = 0; i < ETH_ALEN; i++)
 		dev->dev_addr[i] = RTL_R8(MAC0 + i);
+
+    memcpy(dev->dev_addr, themacaddr, ETH_ALEN);
+
+    int testint=0;
+    for (i = 0; i < ETH_ALEN; i++)
+      testint += dev->dev_addr[i];
+    
+    if(testint == 0){
+      eth_hw_addr_random(dev);
+    }
 
 	SET_ETHTOOL_OPS(dev, &rtl8169_ethtool_ops);
 	dev->watchdog_timeo = RTL8169_TX_TIMEOUT;

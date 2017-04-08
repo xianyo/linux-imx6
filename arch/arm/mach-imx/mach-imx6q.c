@@ -422,6 +422,15 @@ static const struct of_dev_auxdata imx6q_auxdata_lookup[] __initconst = {
 #define EXT_UART_RST	IMX_GPIO_NR(3, 20)
 #define UART3_RS485_RS422	IMX_GPIO_NR(2, 31)
 
+#define PCIE_PWREN	IMX_GPIO_NR(2, 3)
+#define PCIE_RST	IMX_GPIO_NR(2, 2)
+#define PCIE_WDIS	IMX_GPIO_NR(2, 1)
+#define PCIE_WAKE	IMX_GPIO_NR(2, 0)
+#define LAN_PWREN	IMX_GPIO_NR(1, 30)
+#define LAN_WAKE	IMX_GPIO_NR(1, 27)
+#define LAN_RST	IMX_GPIO_NR(1, 29)
+#define LAN_DISABLE	IMX_GPIO_NR(1, 28)
+
 
 static void __init imx6q_s606_init(void)
 {
@@ -450,6 +459,19 @@ static void __init imx6q_s606_init(void)
 
   if (gpio_is_valid(UART3_RS485_RS422) &&!gpio_request_one(UART3_RS485_RS422, GPIOF_DIR_OUT, "UART3_RS485_RS422"))
 		gpio_set_value_cansleep(UART3_RS485_RS422, 0);
+
+  if (gpio_is_valid(PCIE_RST) &&!gpio_request_one(PCIE_RST, GPIOF_DIR_OUT, "PCIE_RST"))
+		gpio_set_value_cansleep(PCIE_RST, 1);
+
+  if (gpio_is_valid(PCIE_WDIS) &&!gpio_request_one(PCIE_WDIS, GPIOF_DIR_OUT, "PCIE_WDIS"))
+		gpio_set_value_cansleep(PCIE_WDIS, 1);
+
+  if (gpio_is_valid(PCIE_WAKE) &&!gpio_request_one(PCIE_WAKE, GPIOF_DIR_OUT, "PCIE_WAKE"))
+		gpio_set_value_cansleep(PCIE_WAKE, 0);
+
+  if (gpio_is_valid(LAN_WAKE) &&!gpio_request_one(LAN_WAKE, GPIOF_DIR_OUT, "LAN_WAKE"))
+		gpio_set_value_cansleep(LAN_WAKE, 1);
+
 }
 
 static void __init imx6q_init_machine(void)

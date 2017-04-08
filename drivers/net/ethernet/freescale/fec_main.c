@@ -149,6 +149,9 @@ static unsigned char macaddr[ETH_ALEN];
 module_param_array(macaddr, byte, NULL, 0);
 MODULE_PARM_DESC(macaddr, "FEC Ethernet MAC address");
 
+unsigned char themacaddr[ETH_ALEN];
+EXPORT_SYMBOL(themacaddr);
+
 #if defined(CONFIG_M5272)
 /*
  * Some hardware gets it MAC address out of local flash memory.
@@ -1727,10 +1730,13 @@ static void fec_get_mac(struct net_device *ndev)
 	}
 
 	memcpy(ndev->dev_addr, iap, ETH_ALEN);
-
+    
 	/* Adjust MAC if using macaddr */
 	if (iap == macaddr)
 		 ndev->dev_addr[ETH_ALEN-1] = macaddr[ETH_ALEN-1] + fep->dev_id;
+
+	memcpy(themacaddr, ndev->dev_addr, ETH_ALEN);
+    themacaddr[ETH_ALEN-1] = themacaddr[ETH_ALEN-1] + 1;
 }
 
 /* ------------------------------------------------------------------------- */

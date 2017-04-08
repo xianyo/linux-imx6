@@ -209,7 +209,7 @@
 	};
 
 	minipcie_ctrl {
-		power-on-gpio = <&gpio1 30 0>;
+		power-on-gpio = <&gpio2 3 0>;
 	};
 /*
     bt_rfkill {
@@ -775,6 +775,7 @@
 
 &pcie {
 	power-on-gpio = <&gpio1 30 0>;
+	disable-gpio = <&gpio1 28 0>;
 	reset-gpio = <&gpio1 29 0>;
 	status = "okay";
 };
