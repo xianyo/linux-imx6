@@ -144,4 +144,45 @@ static inline bool u64_stats_fetch_retry_bh(const struct u64_stats_sync *syncp,
 #endif
 }
 
+static inline unsigned int __u64_stats_fetch_begin(const struct u64_stats_sync *syncp)
+{
+#if BITS_PER_LONG==32 && defined(CONFIG_SMP)
+	return read_seqcount_begin(&syncp->seq);
+#else
+	return 0;
+#endif
+}
+
+static inline bool __u64_stats_fetch_retry(const struct u64_stats_sync *syncp,
+					 unsigned int start)
+{
+#if BITS_PER_LONG==32 && defined(CONFIG_SMP)
+	return read_seqcount_retry(&syncp->seq, start);
+#else
+	return false;
+#endif
+}
+/*
+ * In case irq handlers can update u64 counters, readers can use following helpers
+ * - SMP 32bit arches use seqcount protection, irq safe.
+ * - UP 32bit must disable irqs.
+ * - 64bit have no problem atomically reading u64 values, irq safe.
+ */
+static inline unsigned int u64_stats_fetch_begin_irq(const struct u64_stats_sync *syncp)
+{
+#if BITS_PER_LONG==32 && !defined(CONFIG_SMP)
+	local_irq_disable();
+#endif
+	return __u64_stats_fetch_begin(syncp);
+}
+
+static inline bool u64_stats_fetch_retry_irq(const struct u64_stats_sync *syncp,
+					     unsigned int start)
+{
+#if BITS_PER_LONG==32 && !defined(CONFIG_SMP)
+	local_irq_enable();
+#endif
+	return __u64_stats_fetch_retry(syncp, start);
+}
+
 #endif /* _LINUX_U64_STATS_SYNC_H */
