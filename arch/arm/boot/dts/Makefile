@@ -183,6 +183,7 @@ dtb-$(CONFIG_ARCH_MXC) += \
 	imx6qp-sabresd-hdcp.dtb \
 	imx6q-sabrelite.dtb \
 	imx6q-s606.dtb \
+	imx6q-s703.dtb \
 	imx6q-sabresd.dtb \
 	imx6q-sabresd-btwifi.dtb \
 	imx6q-sabresd-enetirq.dtb \

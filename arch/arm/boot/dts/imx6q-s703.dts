@@ -1,0 +1,82 @@
+/*
+ * Copyright 2012 Freescale Semiconductor, Inc.
+ * Copyright 2011 Linaro Ltd.
+ *
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
+ */
+
+/dts-v1/;
+
+#include "imx6q.dtsi"
+#include "imx6qdl-s703.dtsi"
+
+/ {
+	model = "ARMT i.MX6 Quad S703 Board";
+	compatible = "fsl,imx6q-s703", "fsl,imx6q-sabresd", "fsl,imx6q";
+};
+
+&ldb {
+	lvds-channel@0 {
+		crtc = "ipu1-di0";
+	  status = "okay";
+	};
+
+	lvds-channel@1 {
+		crtc = "ipu2-di1";
+	  status = "okay";
+	};
+};
+
+&ipu1 {
+	bypass_reset = <1>;
+	status = "okay";
+};
+
+&mxclcd0 {
+	ipu_id = <0>;
+	disp_id = <0>;
+	status = "disabled";
+};
+
+&mxclcd1 {
+	ipu_id = <0>;
+	disp_id = <1>;
+	status = "disabled";
+};
+
+&mxcfb1 {
+  late_init = <1>;
+  fb_base = <0x18800000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
+  fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
+	status = "okay";
+};
+
+&mxcfb2 {
+  late_init = <0>;
+  fb_base = <0x18800000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
+  fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
+	status = "okay";
+};
+
+&mxcfb3 {
+  late_init = <0>;
+  fb_base = <0x18800000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
+  fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
+	status = "disabled";
+};
+
+&mxcfb4 {
+  late_init = <0>;
+  fb_base = <0x18800000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
+  fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
+	status = "disabled";
+};
+
+&sata {
+	status = "okay";
+};

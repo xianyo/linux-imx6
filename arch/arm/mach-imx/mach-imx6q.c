@@ -434,7 +434,7 @@ static const struct of_dev_auxdata imx6q_auxdata_lookup[] __initconst = {
 
 static void __init imx6q_s606_init(void)
 {
-	pr_warn("imx6q_s606_init to initialize soc device\n");
+	pr_warn("\nimx6q_s606_init to initialize soc device\n\n");
 
 	if (gpio_is_valid(LCD_PWREN) &&!gpio_request_one(LCD_PWREN, GPIOF_DIR_OUT, "LCD_PWREN"))
 		gpio_set_value_cansleep(LCD_PWREN, 1);
@@ -474,6 +474,45 @@ static void __init imx6q_s606_init(void)
 
 }
 
+
+static void __init imx6q_s703_init(void)
+{
+	pr_warn("\nimx6q_s703_init to initialize soc device\n\n");
+
+	if (gpio_is_valid(LCD_PWREN) &&!gpio_request_one(LCD_PWREN, GPIOF_DIR_OUT, "LCD_PWREN"))
+		gpio_set_value_cansleep(LCD_PWREN, 1);
+
+	if (gpio_is_valid(DISP0_BLEN) &&!gpio_request_one(DISP0_BLEN, GPIOF_DIR_OUT, "DISP0_BLEN"))
+		gpio_set_value_cansleep(DISP0_BLEN, 1);
+
+	if (gpio_is_valid(LCD_GPIO) &&!gpio_request_one(LCD_GPIO, GPIOF_DIR_OUT, "LCD_GPIO"))
+		gpio_set_value_cansleep(LCD_GPIO, 1);
+
+	if (gpio_is_valid(AUD_PWREN) &&!gpio_request_one(AUD_PWREN, GPIOF_DIR_OUT, "AUD_PWREN"))
+		gpio_set_value_cansleep(AUD_PWREN, 1);
+
+	if (gpio_is_valid(EXT_UART_RST) &&!gpio_request_one(EXT_UART_RST, GPIOF_DIR_OUT, "EXT_UART_RST"))
+		gpio_set_value_cansleep(EXT_UART_RST, 1);
+
+  if (gpio_is_valid(WLAN_PWREN) &&!gpio_request_one(WLAN_PWREN, GPIOF_DIR_OUT, "WLAN_PWREN"))
+		gpio_set_value_cansleep(WLAN_PWREN, 1);
+
+  if (gpio_is_valid(UART3_RS485_RS422) &&!gpio_request_one(UART3_RS485_RS422, GPIOF_DIR_OUT, "UART3_RS485_RS422"))
+		gpio_set_value_cansleep(UART3_RS485_RS422, 0);
+
+  if (gpio_is_valid(PCIE_RST) &&!gpio_request_one(PCIE_RST, GPIOF_DIR_OUT, "PCIE_RST"))
+		gpio_set_value_cansleep(PCIE_RST, 1);
+
+  if (gpio_is_valid(PCIE_WDIS) &&!gpio_request_one(PCIE_WDIS, GPIOF_DIR_OUT, "PCIE_WDIS"))
+		gpio_set_value_cansleep(PCIE_WDIS, 1);
+
+  if (gpio_is_valid(PCIE_WAKE) &&!gpio_request_one(PCIE_WAKE, GPIOF_DIR_OUT, "PCIE_WAKE"))
+		gpio_set_value_cansleep(PCIE_WAKE, 0);
+
+  if (gpio_is_valid(LAN_WAKE) &&!gpio_request_one(LAN_WAKE, GPIOF_DIR_OUT, "LAN_WAKE"))
+		gpio_set_value_cansleep(LAN_WAKE, 1);
+
+}
 static void __init imx6q_init_machine(void)
 {
 	struct device *parent;
@@ -495,6 +534,9 @@ static void __init imx6q_init_machine(void)
 
 	if (of_machine_is_compatible("fsl,imx6q-s606"))
 		imx6q_s606_init();
+
+	if (of_machine_is_compatible("fsl,imx6q-s703"))
+		imx6q_s703_init();
 		
 	imx6q_enet_init();
 	imx_anatop_init();

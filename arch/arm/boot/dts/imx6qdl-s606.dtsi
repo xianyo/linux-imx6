@@ -48,7 +48,7 @@
 			gpio = <&gpio6 14 0>;
 			enable-active-high;
 		};
-
+/*
 		wlreg_on: fixedregulator@100 {
 			compatible = "regulator-fixed";
 			regulator-min-microvolt = <5000000>;
@@ -63,6 +63,7 @@
 			compatible = "android,bcmdhd_wlan";
 			wlreg_on-supply = <&wlreg_on>;
 		};
+*/
 	};
 
 	sound {
