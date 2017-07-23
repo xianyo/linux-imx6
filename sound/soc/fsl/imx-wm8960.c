@@ -16,6 +16,7 @@
 #include <linux/slab.h>
 #include <linux/gpio.h>
 #include <linux/clk.h>
+#include <linux/switch.h>
 #include <sound/soc.h>
 #include <sound/jack.h>
 #include <sound/control.h>
@@ -51,6 +52,7 @@ struct imx_priv {
 	struct platform_device *pdev;
 	struct platform_device *asrc_pdev;
 	struct snd_card *snd_card;
+	struct switch_dev sdev;
 };
 
 static struct imx_priv card_priv;
@@ -88,28 +90,38 @@ static int hp_set_status_check(void)
 
 	if (hp_status != priv->hp_active_low) {
 		snprintf(buf, 32, "STATE=%d", 2);
+#ifdef CONFIG_SWITCH
+		switch_set_state(&priv->sdev, 2);
+#endif
 		snd_soc_dapm_disable_pin(&priv->codec->dapm, "Ext Spk");
 		snd_soc_dapm_disable_pin(&priv->codec->dapm, "Main MIC");
+		snd_soc_dapm_enable_pin(&priv->codec->dapm, "Headset Jack");
+		snd_soc_dapm_enable_pin(&priv->codec->dapm, "Hp MIC");
 		ret = imx_hp_set_gpio.report;
 
 		/*
 		 *  As the hp MIC only connect the input for left channel, we
 		 *  need to route it for right channel.
 		 */
-		snd_soc_update_bits(priv->codec, WM8960_ADDCTL1, 3<<2, 1<<2);
+		/* snd_soc_update_bits(priv->codec, WM8960_ADDCTL1, 3<<2, 1<<2); */
 
 		snd_kctl_jack_report(priv->snd_card, priv->headset_kctl, 1);
 	} else {
 		snprintf(buf, 32, "STATE=%d", 0);
+#ifdef CONFIG_SWITCH
+		switch_set_state(&priv->sdev, 0);
+#endif
 		snd_soc_dapm_enable_pin(&priv->codec->dapm, "Ext Spk");
 		snd_soc_dapm_enable_pin(&priv->codec->dapm, "Main MIC");
+		snd_soc_dapm_disable_pin(&priv->codec->dapm, "Headset Jack");
+		snd_soc_dapm_disable_pin(&priv->codec->dapm, "Hp MIC");
 		ret = 0;
 
 		/*
 		 *  As the Main MIC only connect the input for right channel,
 		 *  we need to route it for left channel.
 		 */
-		snd_soc_update_bits(priv->codec, WM8960_ADDCTL1, 3<<2, 2<<2);
+		/* snd_soc_update_bits(priv->codec, WM8960_ADDCTL1, 3<<2, 2<<2); */
 
 		snd_kctl_jack_report(priv->snd_card, priv->headset_kctl, 0);
 	}
@@ -208,7 +220,7 @@ static void wm8960_init(struct snd_soc_dai *codec_dai)
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct snd_soc_card *card = codec_dai->card;
 	struct imx_wm8960_data *data = snd_soc_card_get_drvdata(card);
-
+#if 0
 	/*
 	 * codec ADCLRC pin configured as GPIO, DACLRC pin is used as a frame
 	 * clock for ADCs and DACs
@@ -220,6 +232,10 @@ static void wm8960_init(struct snd_soc_dai *codec_dai)
 	 */
 	snd_soc_update_bits(codec, WM8960_ADDCTL4, 7<<4, 3<<4);
 
+	if (data->hp_det[0] > 3) {
+		snd_soc_dapm_enable_pin(&codec->dapm, "Ext Spk");
+		return;
+	}
 	/*
 	 * Enable headphone jack detect
 	 */
@@ -232,6 +248,7 @@ static void wm8960_init(struct snd_soc_dai *codec_dai)
 	 * route left channel to right channel in default.
 	 */
 	snd_soc_update_bits(codec, WM8960_ADDCTL1, 3<<2, 1<<2);
+#endif
 }
 
 /* -1 for reserved value */
@@ -319,6 +336,7 @@ static int imx_hifi_hw_params(struct snd_pcm_substream *substream,
 	for (i = 0; i < ARRAY_SIZE(sysclk_divs); ++i) {
 		if (sysclk_divs[i] == -1)
 			continue;
+		//sysclk = data->clk_frequency / sysclk_divs[i];
 		sysclk /= sysclk_divs[i];
 		for (j = 0; j < ARRAY_SIZE(dac_divs); ++j) {
 			if (sysclk == sample_rate * dac_divs[j]) {
@@ -676,6 +694,16 @@ audmux_bypass:
 
 	platform_set_drvdata(pdev, &data->card);
 	snd_soc_card_set_drvdata(&data->card, data);
+
+	priv->sdev.name = "h2w";
+#ifdef CONFIG_SWITCH
+	ret = switch_dev_register(&priv->sdev);
+#endif
+	if (ret < 0) {
+		ret = -EINVAL;
+		goto fail;
+	}
+
 	ret = devm_snd_soc_register_card(&pdev->dev, &data->card);
 	if (ret) {
 		dev_err(&pdev->dev, "snd_soc_register_card failed (%d)\n", ret);
