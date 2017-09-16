@@ -915,6 +915,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usdhc3>;
 	bus-width = <4>;
+	cd-gpios = <&gpio2 7 0>;
 	no-1-8-v;
 	wifi-host;
 	keep-power-in-suspend;

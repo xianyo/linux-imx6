@@ -23,6 +23,7 @@ extern void *dhd_wlan_mem_prealloc(int section, unsigned long size);
 
 static int gpio_wl_reg_on = IMX_GPIO_NR(7, 8); // WL_HOST_WAKE is output pin of WLAN module
 static int gpio_wl_host_wake = IMX_GPIO_NR(6, 18); // WL_HOST_WAKE is output pin of WLAN module
+static int gpio_wl_cd_set = IMX_GPIO_NR(2, 5); // WL_HOST_WAKE is output pin of WLAN module
 #ifdef CUSTOMER_OOB
 static int host_oob_irq = -1;
 #endif
@@ -111,17 +112,32 @@ static int dhd_wlan_set_carddetect(bool present)
 #if !defined(BUS_POWER_RESTORE)
 	if (present) {
 		printf("======== Card detection to detect SDIO card! ========\n");
+		if (gpio_wl_cd_set >= 0) {
+			err = gpio_direction_output(gpio_wl_cd_set, 0);
+			if (err) {
+				printf("%s: WL_CD_SET didn't output low\n", __FUNCTION__);
+				return -EIO;
+			}
+		}
 #ifdef CUSTOMER_HW_PLATFORM
 		err = sdhci_force_presence_change(&sdmmc_channel, 1);
 #endif /* CUSTOMER_HW_PLATFORM */
 	} else {
 		printf("======== Card detection to remove SDIO card! ========\n");
+		if (gpio_wl_cd_set >= 0) {
+			err = gpio_direction_output(gpio_wl_cd_set, 1);
+			if (err) {
+				printf("%s: WL_CD_SET didn't output hige\n", __FUNCTION__);
+				return -EIO;
+			}
+		}
 #ifdef CUSTOMER_HW_PLATFORM
 		err = sdhci_force_presence_change(&sdmmc_channel, 0);
 #endif /* CUSTOMER_HW_PLATFORM */
 	}
 #endif /* BUS_POWER_RESTORE */
 
+    printf("%s: err %d\n", __FUNCTION__,err);
 	return err;
 }
 
@@ -213,6 +229,12 @@ int dhd_wlan_init_gpio(void)
 		gpio_wl_reg_on = -1;
 	}
 
+	if (gpio_wl_cd_set >= 0 && gpio_request(gpio_wl_cd_set, "WL_CD_SET")) {
+		printf("%s: Faiiled to request gpio %d for WL_CD_SET\n",
+               __FUNCTION__, gpio_wl_cd_set);
+		gpio_wl_cd_set = -1;
+	}
+
 #ifdef CUSTOMER_OOB
 	printf("%s: GPIO(WL_HOST_WAKE) = %d\n", __FUNCTION__, gpio_wl_host_wake);
 	if (gpio_wl_host_wake >= 0) {
@@ -256,6 +278,10 @@ static void dhd_wlan_deinit_gpio(void)
 	if (gpio_wl_reg_on >= 0) {
 		printf("%s: gpio_free(WL_REG_ON %d)\n", __FUNCTION__, gpio_wl_reg_on);
 		gpio_free(gpio_wl_reg_on);
+	}
+	if (gpio_wl_cd_set >= 0) {
+		printf("%s: gpio_free(WL_CD_SET %d)\n", __FUNCTION__, gpio_wl_cd_set);
+		gpio_free(gpio_wl_cd_set);
 	}
 #ifdef CUSTOMER_OOB
 	if (host_oob_irq >= 0) {
