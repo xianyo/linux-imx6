@@ -22,7 +22,7 @@
 
 &ldb {
 	lvds-channel@0 {
-		crtc = "ipu1-di0";
+		crtc = "ipu2-di0";
 	  status = "okay";
 	};
 
@@ -67,14 +67,14 @@
   late_init = <0>;
   fb_base = <0x18800000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
   fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
-	status = "okay";
+	status = "disabled";
 };
 
 &mxcfb4 {
   late_init = <0>;
   fb_base = <0x18800000>;  /* Frame buffer base address, it is same as CONFIG_FB_BASE in Uboot. */
   fb_size = <0x01800000>;  /* Reserved display memory size, bigger than 3 x framer buffer size. */
-	status = "okay";
+	status = "disabled";
 };
 
 &sata {
